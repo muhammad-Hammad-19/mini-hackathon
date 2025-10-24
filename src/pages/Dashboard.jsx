@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import jsPDF from "jspdf";
 
+
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [pitches, setPitches] = useState([]);
