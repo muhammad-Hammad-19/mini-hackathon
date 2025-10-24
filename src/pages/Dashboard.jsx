@@ -12,10 +12,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentUser = auth.currentUser;
-    if (currentUser) setUser(currentUser);
+    setUser(auth.currentUser);
 
-    const unsubscribe = onSnapshot(collection(db, "startupIdeas"), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, "pitches"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setPitches(data);
       setLoading(false);
@@ -29,32 +28,31 @@ export default function Dashboard() {
     navigate("/Login");
   };
 
-  // ✅ Generate PDF for a single pitch
   const handleDownloadPDF = (pitch) => {
     const doc = new jsPDF();
-
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("PitchCraft - AI Generated Pitch", 20, 20);
-
-    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
 
     let y = 40;
     const addLine = (title, content) => {
       doc.setFont("helvetica", "bold");
       doc.text(title, 20, y);
       doc.setFont("helvetica", "normal");
-      const split = doc.splitTextToSize(content || "—", 170);
-      doc.text(split, 20, y + 6);
-      y += split.length * 7 + 10;
+      const lines = doc.splitTextToSize(content || "—", 170);
+      doc.text(lines, 20, y + 6);
+      y += lines.length * 7 + 10;
     };
 
-    addLine("💡 User Idea:", pitch.idea);
-    addLine("🏷️ Startup Name:", pitch.startupName);
+    addLine("🏷️ Startup Name:", pitch.name);
     addLine("💬 Tagline:", pitch.tagline);
-    addLine("🧠 Elevator Pitch:", pitch.elevatorPitch);
-    addLine("📊 Industry:", pitch.industry || "Not specified");
+    addLine("🧠 Summary:", pitch.summary);
+    addLine("🚧 Problem:", pitch.problem);
+    addLine("💡 Solution:", pitch.solution);
+    addLine("👥 Audience:", pitch.audience);
+    addLine("🌐 Landing Copy:", pitch.landing_copy);
     addLine(
       "🕒 Created At:",
       pitch.createdAt?.seconds
@@ -62,110 +60,126 @@ export default function Dashboard() {
         : "Just now"
     );
 
-    doc.save(`${pitch.startupName || "Pitch"}_PitchCraft.pdf`);
+    doc.save(`${pitch.name || "Pitch"}_PitchCraft.pdf`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto bg-white shadow-md rounded-xl p-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b pb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">🎯 PitchCraft Dashboard</h1>
-            <p className="text-gray-600">
-              Welcome,&nbsp;
-              <span className="font-semibold text-blue-600">
-                {user?.displayName || user?.email || "Guest"}
-              </span>
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate("/PitchInputForm")}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-            >
-              ➕ New Pitch
-            </button>
-            <button
-              onClick={handleLogout}
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg py-6 px-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            🚀 PitchCraft Dashboard
+          </h1>
+          <p className="text-indigo-100">
+            Welcome,&nbsp;
+            <span className="font-semibold">
+              {user?.displayName || user?.email || "Guest"}
+            </span>
+          </p>
         </div>
+        <div className="flex gap-3 mt-4 md:mt-0">
+          <button
+            onClick={() => navigate("/PitchInputForm")}
+            className="bg-white text-indigo-700 px-5 py-2 rounded-lg font-medium hover:bg-indigo-100 transition"
+          >
+            ➕ New Pitch
+          </button>
+          <button
+            onClick={handleLogout}
+            className="bg-transparent border border-white/70 text-white px-5 py-2 rounded-lg hover:bg-white/20 transition"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
 
-        {/* Pitches Section */}
+      {/* Main Section */}
+      <main className="max-w-7xl mx-auto p-6">
         {loading ? (
-          <p className="text-center text-gray-500 py-12">Loading pitches...</p>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-400 border-t-transparent"></div>
+          </div>
         ) : pitches.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-20">
             <img
               src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
               alt="No pitches"
-              className="mx-auto w-40 mb-4 opacity-80"
+              className="mx-auto w-40 mb-6 opacity-80"
             />
-            <p className="text-gray-600 mb-4 text-lg">
-              No pitches yet. Ready to build your startup dream?
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+              No Pitches Yet 😔
+            </h2>
+            <p className="text-gray-500 mb-6">
+              Let’s turn your next big idea into a startup pitch!
             </p>
             <button
               onClick={() => navigate("/PitchInputForm")}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+              className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition"
             >
-              Create Your First Pitch
+              Create Your First Pitch 🚀
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
             {pitches.map((pitch) => (
               <div
                 key={pitch.id}
-                className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition transform"
+                className="backdrop-blur-lg bg-white/70 border border-white/40 shadow-xl rounded-2xl p-6 hover:shadow-2xl hover:-translate-y-1 transition-transform"
               >
-                {/* User Question */}
                 <div className="mb-3">
-                  <p className="text-gray-400 text-sm">💡 User Idea</p>
-                  <p className="text-gray-800 font-medium bg-gray-50 border rounded-md p-2">
-                    {pitch.idea || "—"}
+                  <h3 className="text-2xl font-bold text-indigo-700">
+                    {pitch.name || "Unnamed Startup"}
+                  </h3>
+                  <p className="italic text-gray-600 mb-3">
+                    “{pitch.tagline || "No tagline"}”
                   </p>
                 </div>
 
-                {/* AI Generated Answer */}
-                <h3 className="text-xl font-bold text-blue-700 mt-3">
-                  {pitch.startupName || "Unnamed Startup"}
-                </h3>
-                <p className="text-gray-600 italic mb-1">“{pitch.tagline || "No tagline"}”</p>
-                <p className="text-gray-700 text-sm leading-relaxed mb-2">
-                  {pitch.elevatorPitch || "No pitch generated yet."}
+                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
+                  {pitch.summary || "No summary available."}
                 </p>
 
-                {/* Metadata + PDF button */}
-                <div className="flex justify-between items-center text-xs text-gray-400 mt-3">
-                  <span>{pitch.industry ? `📊 ${pitch.industry}` : ""}</span>
-                  <span>
-                    {pitch.createdAt?.seconds
-                      ? new Date(pitch.createdAt.seconds * 1000).toLocaleString()
-                      : "Just now"}
-                  </span>
+                <div className="space-y-1 text-sm text-gray-600 mb-4">
+                  <p>
+                    <strong className="text-gray-800">🚧 Problem:</strong>{" "}
+                    {pitch.problem || "—"}
+                  </p>
+                  <p>
+                    <strong className="text-gray-800">💡 Solution:</strong>{" "}
+                    {pitch.solution || "—"}
+                  </p>
+                  <p>
+                    <strong className="text-gray-800">👥 Audience:</strong>{" "}
+                    {pitch.audience || "—"}
+                  </p>
                 </div>
 
-                <button
-                  onClick={() => handleDownloadPDF(pitch)}
-                  className="mt-4 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
-                >
-                  ⬇️ Download as PDF
-                </button>
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>
+                    {pitch.createdAt?.seconds
+                      ? new Date(
+                          pitch.createdAt.seconds * 1000
+                        ).toLocaleString()
+                      : "Just now"}
+                  </span>
+                  <button
+                    onClick={() => handleDownloadPDF(pitch)}
+                    className="text-indigo-600 font-medium hover:underline"
+                  >
+                    ⬇️ Download PDF
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Floating Add Button for Mobile */}
+      {/* Floating Add Button (Mobile) */}
       <button
         onClick={() => navigate("/PitchInputForm")}
-        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 text-2xl md:hidden"
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:scale-105 transition-transform text-2xl md:hidden"
         title="New Pitch"
       >
         +
