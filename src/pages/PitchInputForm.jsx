@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { doc, setDoc } from "firebase/firestore";
 import { GoogleGenAI } from "@google/genai";
 import { db } from "../firebase";
-
+import { useNavigate } from "react-router";
 const ai = new GoogleGenAI({
   apiKey: import.meta.env.VITE_GEMINI_API_KEY,
 });
@@ -13,7 +13,7 @@ export default function PitchInputForm() {
   const [industry, setIndustry] = useState("");
   const [output, setOutput] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   const main = async () => {
     if (!idea.trim()) return alert("⚠️ Please enter your startup idea!");
 
@@ -175,12 +175,18 @@ export default function PitchInputForm() {
             )}
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center flex gap-3 justify-center">
             <button
               onClick={() => setOutput(null)}
               className="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg transition"
             >
               🔁 Generate Another Pitch
+            </button>
+            <button
+              onClick={() => navigate("/Dashboard")}
+              className="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg transition"
+            >
+              🔁Check Pitches
             </button>
           </div>
         </div>
